@@ -269,8 +269,8 @@
                 </div>
                 <div class="accuracy-text" id="accuracy-text">Current Accuracy: 0%</div>
             </div>
-
-<!--             <div class="pose-container">
+<!-- 
+            <div class="pose-container">
                 <h3>Pose Reference</h3>
                 <img id="pose-image" src="warriorpose.png" alt="Pose Image" class="tree-image">
                 <img id="pose-image" src="treepose.png" alt="Pose Image" class="tree-image">
@@ -310,8 +310,8 @@
     <script src="https://cdn.jsdelivr.net/npm/@teachablemachine/pose@0.8/dist/teachablemachine-pose.min.js"></script>
     <script type="text/javascript">
         const URL = "https://teachablemachine.withgoogle.com/models/Ic95lVVYs/";
-        let model, webcam, ctx, maxPredictions;
-
+        let model, ctx, maxPredictions;
+        
         let accuracyTimer = 0;
         let growthStage = 'seed';
         let lastTimestamp = null;  // Changed from 0 to null
@@ -320,6 +320,16 @@
             'seedling': 10,
             'plant': 15
         };
+
+                // Add this near the top where other variables are declared
+        let webcam = null;
+
+        // Add this cleanup function
+        window.addEventListener('beforeunload', () => {
+            if (webcam) {
+                webcam.stop();
+            }
+        });
 
         const sound = new Audio('./src/assets/success.mp3')
         sound.preload = 'auto';
@@ -420,7 +430,7 @@
 
 
         function updateGrowthStage(accuracy, currentTime) {
-    console.log('Current accuracy:', accuracy); // Debug log
+    console.log('Current accuracy:', accuracy);
 
     if (accuracy >= 90) {
         if (lastTimestamp === null) {
@@ -431,22 +441,27 @@
         const deltaTime = (currentTime - lastTimestamp) / 1000;
         accuracyTimer += deltaTime;
 
-        console.log('Timer:', accuracyTimer); // Debug log
+        console.log('Timer:', accuracyTimer);
 
         if (accuracyTimer >= requiredSeconds[growthStage]) {
-            console.log('Advancing stage from:', growthStage); // Debug log
+            console.log('Advancing stage from:', growthStage);
+            let oldStage = growthStage;
             if (growthStage === 'seed') {
                 growthStage = 'seedling';
-		playSound();
+                playSound();
             } else if (growthStage === 'seedling') {
                 growthStage = 'plant';
-		playSound();
+                playSound();
             } else if (growthStage === 'plant') {
                 growthStage = 'tree';
-		playSound();
+                playSound();
+            }
+            
+            if (oldStage !== growthStage) {
+                updateTreeImage();
+                saveProgress(); // Save progress whenever the stage changes
             }
             accuracyTimer = 0;
-            updateTreeImage();
         }
     } else {
         accuracyTimer = 0;
@@ -523,49 +538,58 @@
         }
 
         async function startPractice() {
-            try {
-                const size = 800;
-                const flip = true;
-                webcam = new tmPose.Webcam(size, size, flip);
-                await webcam.setup();
-                await webcam.play();
-                
-                const canvas = document.getElementById("canvas");
-                canvas.width = size;
-                canvas.height = size;
-                ctx = canvas.getContext("2d");
-                
-                document.getElementById('canvas-container').style.display = 'flex';
-                document.getElementById('prediction-container').style.display = 'block';
-                document.getElementById('setup-container').style.display = 'none';
-                document.getElementById('tree-container').style.display = 'block';
-                
-                document.getElementById('target-pose').textContent = `Target Pose: ${selectedPose}`;
-                
-                // Initialize tree image
-                updateTreeImage();
-                
-                window.requestAnimationFrame(loop);
-            } catch (error) {
-                console.error(error);
-                alert('Error starting webcam: ' + error.message);
-            }
-         }
-        
-        async function initWithPose() {
-            selectedPose = document.getElementById('pose-selector').value;
-            if (!selectedPose) {
-                alert('Please select a pose first!');
-                return;
-            }
-            // Reset growth state
-            growthStage = 'seed';
-            accuracyTimer = 0;
-            lastTimestamp = null;  // Changed from 0 to null   
-    
-            await startPractice();
+    try {
+        // Initialize webcam only if it hasn't been initialized yet
+        if (!webcam) {
+            const size = 800;
+            const flip = true;
+            webcam = new tmPose.Webcam(size, size, flip);
+            await webcam.setup();
         }
+        
+        await webcam.play();
+        
+        const canvas = document.getElementById("canvas");
+        canvas.width = 800;
+        canvas.height = 800;
+        ctx = canvas.getContext("2d");
+        
+        document.getElementById('canvas-container').style.display = 'flex';
+        document.getElementById('prediction-container').style.display = 'block';
+        document.getElementById('setup-container').style.display = 'none';
+        document.getElementById('tree-container').style.display = 'block';
+        
+        document.getElementById('target-pose').textContent = `Target Pose: ${selectedPose}`;
+        
+        updateTreeImage();
+        
+        window.requestAnimationFrame(loop);
+    } catch (error) {
+        console.error(error);
+        alert('Error starting webcam: Make sure you have granted camera permissions and try again.');
+    }
+}
 
+async function initWithPose() {
+    selectedPose = document.getElementById('pose-selector').value;
+    if (!selectedPose) {
+        alert('Please select a pose first!');
+        return;
+    }
+    
+    // Load existing progress before starting
+    loadProgress(selectedPose);
+    
+    accuracyTimer = 0;
+    lastTimestamp = null;
+    
+    // If webcam is already playing, stop it
+    if (webcam && webcam.webcam) {
+        webcam.stop();
+    }
+
+    await startPractice();
+}
         document.getElementById('start-button').addEventListener('click', () => {
             initWithPose();
         });
