@@ -113,7 +113,7 @@
             display: none;
             text-align: center;
             width: 100%;
-            max-width: 75%;
+            max-width: 90%;
             margin-left: auto;
             margin-right: auto;
         }
@@ -274,13 +274,13 @@
         let selectedPose = '';
         
         const poseInstructions = {
-            'Class 1': [
+            'Warior Pose': [
                 'Start in a standing position with your feet wide apart',
                 'Turn your right foot out 90 degrees and your left foot slightly in',
                 'Bend your right knee so it’s directly above your ankle',
                 'Raise your arms parallel to the floor, palms facing down, and look over your right hand'
             ],
-            'Class 2': [
+            'Chair Pose': [
                 'Stand with your feet together',
                 'Raise your arms overhead with palms facing each other',
                 'Bend your knees and sit back as if sitting into a chair',
@@ -433,7 +433,7 @@ function updateGrowthProgress() {
         lastTimestamp = null;  // Changed from 0 to null
             
             try {
-                const size = 400;
+                const size = 800;
                 const flip = true;
                 webcam = new tmPose.Webcam(size, size, flip);
                 await webcam.setup();
