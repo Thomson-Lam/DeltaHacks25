@@ -1,6 +1,7 @@
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom'
 import './App.css'
-import Home from './Home'
+import Home from './Home.tsx'
+import Action from './Action.tsx'
 
 
 function App() {
@@ -9,7 +10,7 @@ function App() {
     <Router>
       <Routes>
         <Route path="/" element={<Home />} />
-        <Route path="/about" element={<About />} />
+        <Route path="/action" element={<Action />} />
       </Routes>
     </Router>
   );
