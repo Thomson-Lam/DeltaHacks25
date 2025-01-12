@@ -1,9 +1,10 @@
-import React from 'react';
+import React, { useState } from 'react';
 import HomeModel from './HomeModel.tsx' // FIXME  
 import { useNavigate } from 'react-router-dom'
 
 export default function Welcome () {
     const navigate = useNavigate();
+    const [isHovered, setIsHovered] = useState(false);
 
     const handleLogin = () => {
         navigate('/login'); // change the route later 
@@ -14,39 +15,71 @@ export default function Welcome () {
     };
 
     const buttonContainers: React.CSSProperties = {
-        position: "relative",
-        top: "30%",
         display: "flex",
-        flexDirection: "column",
         justifyContent: "center",
+        alignItems: "center",
+        flexDirection: "column",
     };
 
-    // 
+    const backgroundStyle: React.CSSProperties = { 
+        
+    };
+    
     const tryStyle: React.CSSProperties = {
-        color: "0xffffff",
     };
 
     const loginStyle: React.CSSProperties = {
-        color: "0xffffff",
+       
     };
 
     const welcomeStyle: React.CSSProperties = {
-        display: "block", 
-        margin: "auto",
-        alignItems: "center",
-        height: "20rem",
-        width: "80vw",
-        borderRadius: "5px",
+         backgroundColor: "blue",
+         marginBottom: "5rem",
+    };
 
+    const modelStyle: React.CSSProperties = {
+        backgroundColor: "magenta",
+        height: "200%",
+        width: "100%",
+        
+    };
+
+    const titleStyle: React.CSSProperties = {
+       backgroundColor: "rgba(255, 255, 255, 0.5)", 
+       textAlign: "center",
+        
+    };
+
+    const container: React.CSSProperties = { 
+        width: "90vw",
+        backgroundColor: "red",
+        display: "flex",
+        flexDirection: "column",
+        justifyContent: "center",
+        alignItems: "center",   
+        overflow: "hidden",
+        marginTop: "1rem",
+        
+    };
+
+    const camera = {
+        position: [2, 30, 130] as [number, number, number],
+        fov: 20
     };
 
     return (
-        <div style={welcomeStyle}>
-            <h1 style={{marginTop: "3rem", paddingTop: "3rem"}}>BIG TITLE</h1>
+        <>
+       <div style={container}>
+        <h1 style={titleStyle}>Grow Your Flow</h1>
+        <div style={backgroundStyle} />
+            <HomeModel url="public/forest3D.gltf" position={[-3, 15, -20]} scale={4} camera={camera} style={modelStyle} />
             <div style={buttonContainers}>
-                <button style={loginStyle} onClick={handleLogin}>Login</button>
-                <button style={tryStyle} onClick={handleSignUp}>Try it now</button>
+                <button style={loginStyle} onMouseEnter={() => setIsHovered(true)} onClick={handleLogin}>Login</button>
+                <button style={tryStyle} onMouseEnter={() => setIsHovered(true)} onClick={handleSignUp}>Try it now</button>
             </div>
-        </div>
+        </div> 
+        
+
+        </>
     );
 }
