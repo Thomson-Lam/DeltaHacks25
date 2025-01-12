@@ -208,6 +208,13 @@
             color: #2d5a27;
         }
 
+        .pose-container {
+            margin-top: 0;
+            margin-bottom: 15px;
+            text-align: center;
+            color: #2d5a27;
+        }
+
         .tree-image {
             aspect-ratio: 1;
             width: 100%;
@@ -262,6 +269,22 @@
                 </div>
                 <div class="accuracy-text" id="accuracy-text">Current Accuracy: 0%</div>
             </div>
+
+            <div class="pose-container">
+                <h3>Pose Reference</h3>
+                <img id="pose-image" src="warriorpose.png" alt="Pose Image" class="tree-image">
+                <img id="pose-image" src="treepose.png" alt="Pose Image" class="tree-image">
+                <img id="pose-image" src="trianglepose.png" alt="Pose Image" class="tree-image">
+                <img id="pose-image" src="chairpose.png" alt="Pose Image" class="tree-image">
+            </div>
+            
+            <script>
+            function updatePoseImage() {
+                var poseSelector = document.getElementById('pose-selector');
+                var poseImage = document.getElementById('pose-image');
+                poseImage.src = poseSelector.value;
+            }
+            </script>
         </div>
 
         <div class="right-panel">
