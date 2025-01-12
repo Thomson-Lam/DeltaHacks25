@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Yoga Progress Overview</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+
+        .nav-bar {
+            background-color: white;
+            padding: 15px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .nav-button {
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+
+        .nav-button:hover {
+            background-color: #45a049;
+        }
+
+        .progress-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            gap: 20px;
+            padding: 20px;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .pose-card {
+            background-color: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            text-align: center;
+        }
+
+        .pose-card img {
+            width: 100px;
+            height: 100px;
+            object-fit: contain;
+            margin: 10px 0;
+        }
+
+        .pose-title {
+            font-size: 20px;
+            color: #333;
+            margin-bottom: 10px;
+        }
+
+        .stage-text {
+            color: #666;
+            font-size: 16px;
+            margin-top: 10px;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+    </style>
+</head>
+<body>
+    <div class="nav-bar">
+        <h1>Yoga Progress Overview</h1>
+        <button class="nav-button" onclick="window.location.href='index.html'">Back to Practice</button>
+    </div>
+
+    <div class="progress-grid" id="progress-grid">
+        <!-- Progress cards will be inserted here -->
+    </div>
+
+    <script>
+        // Define all available poses
+        const allPoses = ['Warior Pose', 'Chair Pose', 'Tree Pose', 'Triangle'];
+
+        function displayProgress() {
+            const progressGrid = document.getElementById('progress-grid');
+            const savedProgress = JSON.parse(localStorage.getItem('yogaProgress') || '{}');
+            
+            // Create a card for each pose
+            allPoses.forEach(pose => {
+                const progress = savedProgress[pose] || {
+                    growthStage: 'seed',
+                    lastUpdated: new Date().toISOString()
+                };
+
+                const card = document.createElement('div');
+                card.className = 'pose-card';
+                card.innerHTML = `
+                    <div class="pose-title">${pose}</div>
+                    <img src="${progress.growthStage}.jpeg" alt="${progress.growthStage}" />
+                    <div class="stage-text">Current Stage: ${progress.growthStage}</div>
+                    <div class="stage-text">Last Updated: ${new Date(progress.lastUpdated).toLocaleDateString()}</div>
+                `;
+                progressGrid.appendChild(card);
+            });
+        }
+
+        // Load progress when page loads
+        displayProgress();
+    </script>
+</body>
+</html>
