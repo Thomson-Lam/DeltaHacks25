@@ -49,6 +49,30 @@
             color: #333;
             margin-bottom: 20px;
         }
+
+        .nav-bar {
+            background-color: white;
+            padding: 15px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .nav-button {
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+
+.nav-button:hover {
+    background-color: #45a049;
+}
         
         .setup-container {
             text-align: center;
@@ -207,9 +231,12 @@
     </style>
 </head>
 <body>
-    <div class="header">
+    <div class="nav-bar">
         <h1>Yoga Pose Practice</h1>
+        <button class="nav-button" onclick="window.location.href='progress.html'">View Progress</button>
     </div>
+
+    
     
     <div class="main-container">
         <div class="left-panel">
@@ -321,6 +348,43 @@
             }
         }
 
+        function saveProgress() {
+            const progress = {
+                pose: selectedPose,
+                growthStage: growthStage,
+                lastUpdated: new Date().toISOString()
+            };
+            
+            // Get existing progress or initialize empty object
+            let allProgress = JSON.parse(localStorage.getItem('yogaProgress') || '{}');
+            
+            // Update progress for current pose
+            allProgress[selectedPose] = progress;
+            
+            // Save back to localStorage
+            localStorage.setItem('yogaProgress', JSON.stringify(allProgress));
+        }
+
+
+        function loadProgress(pose) {
+            const allProgress = JSON.parse(localStorage.getItem('yogaProgress') || '{}');
+            const poseProgress = allProgress[pose];
+            
+            if (poseProgress) {
+                growthStage = poseProgress.growthStage;
+                updateTreeImage(); // Update the image to match saved progress
+            } else {
+                // No saved progress, start from seed
+                growthStage = 'seed';
+                updateTreeImage();
+            }
+        }
+
+        function getAllProgress() {
+            return JSON.parse(localStorage.getItem('yogaProgress') || '{}');
+        }
+
+
         function updateGrowthStage(accuracy, currentTime) {
     console.log('Current accuracy:', accuracy); // Debug log
     
@@ -357,38 +421,72 @@
 }
 
 
-function updateTreeImage() {
-    const treeImg = document.querySelector('.tree-image img');
-    treeImg.src = `${growthStage}.jpeg`;
-}
-
-function updateGrowthProgress() {
-    const treeContainer = document.getElementById('tree-container');
-    let progressText = '';
-    
-    if (growthStage !== 'tree') {
-        if (accuracyTimer > 0) {
-            const remainingSeconds = Math.max(0, requiredSeconds[growthStage] - accuracyTimer);
-            progressText = `Hold pose for ${Math.ceil(remainingSeconds)} more seconds to reach next stage`;
-        } else {
-            progressText = 'Get to 90% accuracy to start progress';
+        function updateTreeImage() {
+            const treeImg = document.querySelector('.tree-image img');
+            treeImg.src = `${growthStage}.jpeg`;
         }
-    } else {
-        progressText = 'Congratulations! You have mastered this pose! 🎉';
-    }
-    
-    // Update or create progress element
-    let progressElement = document.getElementById('growth-progress');
-    if (!progressElement) {
-        progressElement = document.createElement('div');
-        progressElement.id = 'growth-progress';
-        progressElement.style.marginTop = '10px';
-        progressElement.style.textAlign = 'center';
-        treeContainer.appendChild(progressElement);
-    }
-    progressElement.textContent = progressText;
-}
+
+        function updateGrowthStage(accuracy, currentTime) {
+            if (accuracy >= 90) {
+                if (lastTimestamp === null) {
+                    lastTimestamp = currentTime;
+                    return;
+                }
                 
+                const deltaTime = (currentTime - lastTimestamp) / 1000;
+                accuracyTimer += deltaTime;
+                
+                if (accuracyTimer >= requiredSeconds[growthStage]) {
+                    if (growthStage === 'seed') {
+                        growthStage = 'seedling';
+                    } else if (growthStage === 'seedling') {
+                        growthStage = 'plant';
+                    } else if (growthStage === 'plant') {
+                        growthStage = 'tree';
+                    }
+                    accuracyTimer = 0;
+                    updateTreeImage();
+                    saveProgress(); // Add this line to save progress after stage change
+                }
+            } else {
+                accuracyTimer = 0;
+                lastTimestamp = null;
+            }
+            
+            lastTimestamp = currentTime;
+            updateGrowthProgress();
+        }
+
+
+        function updateGrowthProgress() {
+            const treeContainer = document.getElementById('tree-container');
+            let progressText = '';
+            
+            if (growthStage !== 'tree') {
+                if (accuracyTimer > 0) {
+                    const remainingSeconds = Math.max(0, requiredSeconds[growthStage] - accuracyTimer);
+                    progressText = `Hold pose for ${Math.ceil(remainingSeconds)} more seconds to reach next stage`;
+                } else {
+                    progressText = 'Get to 90% accuracy to start progress';
+                }
+            } else {
+                progressText = 'Congratulations! You have mastered this pose! 🎉';
+            }
+            
+            // Update or create progress element
+            let progressElement = document.getElementById('growth-progress');
+            if (!progressElement) {
+                progressElement = document.createElement('div');
+                progressElement.id = 'growth-progress';
+                progressElement.style.marginTop = '10px';
+                progressElement.style.textAlign = 'center';
+                treeContainer.appendChild(progressElement);
+            }
+            progressElement.textContent = progressText;
+        }
+
+
+        
         async function loadModel() {
             const modelURL = URL + "model.json";
             const metadataURL = URL + "metadata.json";
@@ -421,19 +519,21 @@ function updateGrowthProgress() {
         }
         
         async function initWithPose() {
-        selectedPose = document.getElementById('pose-selector').value;
-        if (!selectedPose) {
-            alert('Please select a pose first!');
-            return;
-        }
-        
-        // Reset growth state
-        growthStage = 'seed';
-        accuracyTimer = 0;
-        lastTimestamp = null;  // Changed from 0 to null
+            selectedPose = document.getElementById('pose-selector').value;
+            if (!selectedPose) {
+                alert('Please select a pose first!');
+                return;
+            }
+            
+            // Add this line to load saved progress
+            loadProgress(selectedPose);
+            
+            // Reset timers
+            accuracyTimer = 0;
+            lastTimestamp = null;
             
             try {
-                const size = 800;
+                const size = 400;
                 const flip = true;
                 webcam = new tmPose.Webcam(size, size, flip);
                 await webcam.setup();
@@ -451,9 +551,6 @@ function updateGrowthProgress() {
                 
                 document.getElementById('target-pose').textContent = `Target Pose: ${selectedPose}`;
                 
-                // Initialize tree image
-                updateTreeImage();
-                
                 window.requestAnimationFrame(loop);
             } catch (error) {
                 console.error(error);
@@ -463,29 +560,29 @@ function updateGrowthProgress() {
 
         async function loop(timestamp) {
             webcam.update();
-            await predict();
+            await predict(timestamp);  // Pass the timestamp to predict
             window.requestAnimationFrame(loop);
         }
 
-        async function predict() {
-        const { pose, posenetOutput } = await model.estimatePose(webcam.canvas);
-        const prediction = await model.predict(posenetOutput);
-        
-        const targetPrediction = prediction.find(p => p.className === selectedPose);
-        const accuracy = targetPrediction.probability * 100;
-        
-        const progressFill = document.getElementById('progress-fill');
-        progressFill.style.width = `${accuracy}%`;
-        progressFill.textContent = `${accuracy.toFixed(1)}%`;
-        
-        document.getElementById('accuracy-text').textContent = 
-            `Current Accuracy: ${accuracy.toFixed(1)}%`;
-        
-        // Update growth stage based on accuracy
-        updateGrowthStage(accuracy, performance.now());  // Use performance.now() instead
-        
-        drawPose(pose);
-    }
+        async function predict(timestamp) {
+            const { pose, posenetOutput } = await model.estimatePose(webcam.canvas);
+            const prediction = await model.predict(posenetOutput);
+            
+            const targetPrediction = prediction.find(p => p.className === selectedPose);
+            const accuracy = targetPrediction.probability * 100;
+            
+            const progressFill = document.getElementById('progress-fill');
+            progressFill.style.width = `${accuracy}%`;
+            progressFill.textContent = `${accuracy.toFixed(1)}%`;
+            
+            document.getElementById('accuracy-text').textContent = 
+                `Current Accuracy: ${accuracy.toFixed(1)}%`;
+            
+            // Update growth stage based on accuracy with current timestamp
+            updateGrowthStage(accuracy, timestamp);
+            
+            drawPose(pose);
+        }
 
         function drawPose(pose) {
             if (webcam.canvas) {
