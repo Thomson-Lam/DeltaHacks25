@@ -271,6 +271,17 @@
             'plant': 15
         };
 
+        const sound = new Audio('./src/assets/success.mp3')
+        sound.preload = 'auto';
+        sound.load();
+
+        function playSound() {
+            console.log('')
+            sound.play().catch(error => {
+                console.log('Audio playback failed: ', error)
+            });
+        }
+
         let selectedPose = '';
         
         const poseInstructions = {
@@ -339,10 +350,13 @@
             console.log('Advancing stage from:', growthStage); // Debug log
             if (growthStage === 'seed') {
                 growthStage = 'seedling';
+                playSound();
             } else if (growthStage === 'seedling') {
                 growthStage = 'plant';
+                playSound();
             } else if (growthStage === 'plant') {
                 growthStage = 'tree';
+                playSound();
             }
             accuracyTimer = 0;
             updateTreeImage();
@@ -388,7 +402,7 @@ function updateGrowthProgress() {
     }
     progressElement.textContent = progressText;
 }
-                
+
         async function loadModel() {
             const modelURL = URL + "model.json";
             const metadataURL = URL + "metadata.json";
@@ -419,19 +433,8 @@ function updateGrowthProgress() {
                 alert('Error loading model: ' + error.message);
             }
         }
-        
-        async function initWithPose() {
-        selectedPose = document.getElementById('pose-selector').value;
-        if (!selectedPose) {
-            alert('Please select a pose first!');
-            return;
-        }
-        
-        // Reset growth state
-        growthStage = 'seed';
-        accuracyTimer = 0;
-        lastTimestamp = null;  // Changed from 0 to null
-            
+
+        async function startPractice() {
             try {
                 const size = 800;
                 const flip = true;
@@ -459,7 +462,25 @@ function updateGrowthProgress() {
                 console.error(error);
                 alert('Error starting webcam: ' + error.message);
             }
+         }
+        
+        async function initWithPose() {
+            selectedPose = document.getElementById('pose-selector').value;
+            if (!selectedPose) {
+                alert('Please select a pose first!');
+                return;
+            }
+            // Reset growth state
+            growthStage = 'seed';
+            accuracyTimer = 0;
+            lastTimestamp = null;  // Changed from 0 to null   
+    
+            await startPractice();
         }
+
+        document.getElementById('start-button').addEventListener('click', () => {
+            initWithPose();
+        });
 
         async function loop(timestamp) {
             webcam.update();
@@ -482,7 +503,7 @@ function updateGrowthProgress() {
             `Current Accuracy: ${accuracy.toFixed(1)}%`;
         
         // Update growth stage based on accuracy
-        updateGrowthStage(accuracy, performance.now());  // Use performance.now() instead
+        updateGrowthStage(accuracy, performance.now()); 
         
         drawPose(pose);
     }
