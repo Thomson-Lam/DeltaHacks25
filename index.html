@@ -250,7 +250,7 @@
             <div class="tree-container" id="tree-container">
                 <h3>Your Tree</h3>
                 <div class="tree-image">
-                    <img src="tree.jpg" alt="Tree Visualization" style="max-width: 100%; height: auto;" />
+                    <img src="seed.jpeg" alt="Growth Progress" style="max-width: 100%; height: auto;" />
                 </div>
             </div>
         </div>
@@ -261,26 +261,42 @@
     <script type="text/javascript">
         const URL = "https://teachablemachine.withgoogle.com/models/gbeyuZt6U/";
         let model, webcam, ctx, maxPredictions;
+
+        let accuracyTimer = 0;
+        let growthStage = 'seed';
+        let lastTimestamp = null;  // Changed from 0 to null
+        let requiredSeconds = {
+            'seed': 5,
+            'seedling': 10,
+            'plant': 15
+        };
+
         let selectedPose = '';
         
         const poseInstructions = {
             'Class 1': [
-                'Stand with feet hip-width apart',
-                'Raise your arms overhead',
-                'Keep your spine straight',
-                'Hold this position and breathe deeply'
+                'Start in a standing position with your feet wide apart',
+                'Turn your right foot out 90 degrees and your left foot slightly in',
+                'Bend your right knee so it’s directly above your ankle',
+                'Raise your arms parallel to the floor, palms facing down, and look over your right hand'
             ],
             'Class 2': [
-                'Start in a standing position',
-                'Bend forward from the hips',
-                'Keep your legs straight',
-                'Let your arms hang toward the floor'
+                'Stand with your feet together',
+                'Raise your arms overhead with palms facing each other',
+                'Bend your knees and sit back as if sitting into a chair',
+                'Keep your chest lifted and your weight in your heels'
             ],
-            'Class 3': [
-                'Begin in a kneeling position',
-                'Sit back on your heels',
-                'Fold forward, bringing chest to thighs',
-                'Extend arms in front of you'
+            'Tree Pose': [
+                'Stand tall with your feet together',
+                'Shift your weight onto your right foot and place the sole of your left foot on your inner thigh or calf (not the knee)',
+                'Bring your hands together at your chest in prayer position or extend them overhead',
+                'Focus on a point in front of you to maintain balance'
+            ],
+            'Triangle Pose': [
+                'Start with your feet wide apart',
+                'Turn your right foot out 90 degrees and your left foot slightly in',
+                'Extend your arms out to the sides at shoulder height',
+                'Reach your right hand toward your right foot, keeping both legs straight, and place your hand on your shin, ankle, or the floor'
             ]
         };
 
@@ -304,7 +320,75 @@
                     <p>4. Try to match the selected pose</p>`;
             }
         }
+
+        function updateGrowthStage(accuracy, currentTime) {
+    console.log('Current accuracy:', accuracy); // Debug log
+    
+    if (accuracy >= 90) {
+        if (lastTimestamp === null) {
+            lastTimestamp = currentTime;
+            return;
+        }
         
+        const deltaTime = (currentTime - lastTimestamp) / 1000;
+        accuracyTimer += deltaTime;
+        
+        console.log('Timer:', accuracyTimer); // Debug log
+        
+        if (accuracyTimer >= requiredSeconds[growthStage]) {
+            console.log('Advancing stage from:', growthStage); // Debug log
+            if (growthStage === 'seed') {
+                growthStage = 'seedling';
+            } else if (growthStage === 'seedling') {
+                growthStage = 'plant';
+            } else if (growthStage === 'plant') {
+                growthStage = 'tree';
+            }
+            accuracyTimer = 0;
+            updateTreeImage();
+        }
+    } else {
+        accuracyTimer = 0;
+        lastTimestamp = null;
+    }
+    
+    lastTimestamp = currentTime;
+    updateGrowthProgress();
+}
+
+
+function updateTreeImage() {
+    const treeImg = document.querySelector('.tree-image img');
+    treeImg.src = `${growthStage}.jpeg`;
+}
+
+function updateGrowthProgress() {
+    const treeContainer = document.getElementById('tree-container');
+    let progressText = '';
+    
+    if (growthStage !== 'tree') {
+        if (accuracyTimer > 0) {
+            const remainingSeconds = Math.max(0, requiredSeconds[growthStage] - accuracyTimer);
+            progressText = `Hold pose for ${Math.ceil(remainingSeconds)} more seconds to reach next stage`;
+        } else {
+            progressText = 'Get to 90% accuracy to start progress';
+        }
+    } else {
+        progressText = 'Congratulations! You have mastered this pose! 🎉';
+    }
+    
+    // Update or create progress element
+    let progressElement = document.getElementById('growth-progress');
+    if (!progressElement) {
+        progressElement = document.createElement('div');
+        progressElement.id = 'growth-progress';
+        progressElement.style.marginTop = '10px';
+        progressElement.style.textAlign = 'center';
+        treeContainer.appendChild(progressElement);
+    }
+    progressElement.textContent = progressText;
+}
+                
         async function loadModel() {
             const modelURL = URL + "model.json";
             const metadataURL = URL + "metadata.json";
@@ -337,11 +421,16 @@
         }
         
         async function initWithPose() {
-            selectedPose = document.getElementById('pose-selector').value;
-            if (!selectedPose) {
-                alert('Please select a pose first!');
-                return;
-            }
+        selectedPose = document.getElementById('pose-selector').value;
+        if (!selectedPose) {
+            alert('Please select a pose first!');
+            return;
+        }
+        
+        // Reset growth state
+        growthStage = 'seed';
+        accuracyTimer = 0;
+        lastTimestamp = null;  // Changed from 0 to null
             
             try {
                 const size = 400;
@@ -362,6 +451,9 @@
                 
                 document.getElementById('target-pose').textContent = `Target Pose: ${selectedPose}`;
                 
+                // Initialize tree image
+                updateTreeImage();
+                
                 window.requestAnimationFrame(loop);
             } catch (error) {
                 console.error(error);
@@ -376,21 +468,24 @@
         }
 
         async function predict() {
-            const { pose, posenetOutput } = await model.estimatePose(webcam.canvas);
-            const prediction = await model.predict(posenetOutput);
-            
-            const targetPrediction = prediction.find(p => p.className === selectedPose);
-            const accuracy = targetPrediction.probability * 100;
-            
-            const progressFill = document.getElementById('progress-fill');
-            progressFill.style.width = `${accuracy}%`;
-            progressFill.textContent = `${accuracy.toFixed(1)}%`;
-            
-            document.getElementById('accuracy-text').textContent = 
-                `Current Accuracy: ${accuracy.toFixed(1)}%`;
-            
-            drawPose(pose);
-        }
+        const { pose, posenetOutput } = await model.estimatePose(webcam.canvas);
+        const prediction = await model.predict(posenetOutput);
+        
+        const targetPrediction = prediction.find(p => p.className === selectedPose);
+        const accuracy = targetPrediction.probability * 100;
+        
+        const progressFill = document.getElementById('progress-fill');
+        progressFill.style.width = `${accuracy}%`;
+        progressFill.textContent = `${accuracy.toFixed(1)}%`;
+        
+        document.getElementById('accuracy-text').textContent = 
+            `Current Accuracy: ${accuracy.toFixed(1)}%`;
+        
+        // Update growth stage based on accuracy
+        updateGrowthStage(accuracy, performance.now());  // Use performance.now() instead
+        
+        drawPose(pose);
+    }
 
         function drawPose(pose) {
             if (webcam.canvas) {
