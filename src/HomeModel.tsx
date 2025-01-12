@@ -8,41 +8,30 @@ type HomeModelProps = {
     scale: number; 
 }
 
-type CameraProps = {
-    position: [number, number, number];
-    fov: number;
-};
-
-const cameraSettings: CameraProps = {
-    position: [-20, 200, -20],
-    fov: 80,
-};
 
 function CustomCamera() {
     const { camera } = useThree();
-
     useEffect(() => {
-        camera.position.set(20, 200, 200);
-        camera.lookAt(0,0,0);
+        camera.position.set(10, 100, 10);
+        camera.lookAt(10,100,100);
         camera.near = 0.1;
-        camera.far = 1000; 
+        camera.far = 100; 
         camera.updateProjectionMatrix();
     }, [camera]);
 
     return null; 
 }
 
-
 const HomeModel: React.FC<HomeModelProps> = ({ url, position, scale}) => {
     const { scene } = useGLTF(url);
     return (
-    <Canvas style={{  height: '100%', width: '100%' }}>
+    <Canvas style={{ backgroundColor: "blue", height: '100%', width: '100%' }}>
         <CustomCamera />
         <Suspense fallback={null}>
         <primitive object={scene} position={position} scale={scale} />;
         <Environment preset="sunset" />
-        </Suspense> 
         <OrbitControls />
+        </Suspense> 
     </Canvas>
     );
 }
