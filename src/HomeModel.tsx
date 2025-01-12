@@ -1,7 +1,8 @@
 import { useRef, useEffect, Suspense } from 'react';
 import { Environment, useGLTF, OrbitControls } from '@react-three/drei';
-import { Canvas, useThree } from '@react-three/fiber';
+import { Canvas, useThree, useFrame } from '@react-three/fiber';
 import { AxesHelper, GridHelper, CameraHelper } from 'three';
+import * as THREE from 'three'; 
 
 type HomeModelProps = {
     url: string;
@@ -15,42 +16,50 @@ function CustomCamera() {
     useEffect(() => {
         camera.position.set(10, 60, 10);
         camera.lookAt(300, 0, 0);
-        camera.near = 5;
-        camera.far = 200; 
+        camera.near = 1;
+        camera.far = 100; 
         camera.updateProjectionMatrix();
     }, [camera]);
 
     return null; 
 }
 
-const HomeModel: React.FC<HomeModelProps> = ({ url, position, scale}) => {
-    //const meshRef = useRef();
-    const { scene } = useGLTF(url);
-    useEffect(() => {
-        if (scene) {
-            console.log("scene is fine");
-        }
-    }, [scene]);
+function CameraAnimate() {
+    const { camera } = useThree();
+    const targetZ = 30;
+    const speed = 0.1; 
 
+    useFrame(() => {
+        camera.position.z = THREE.MathUtils.lerp(
+            camera.position.z,
+            targetZ,
+            speed
+        );
+        camera.updateProjectionMatrix(); 
+    });
+
+    return null; 
+}
+
+
+const HomeModel: React.FC<HomeModelProps> = ({ url, position, scale}) => {
+    const meshRef = useRef();
+    const { scene } = useGLTF(url);
+    
     useEffect(() => { // rotation 
         if (scene) {
-            scene.rotation.z = Math.PI / 2; 
+            scene.rotation.z = Math.PI * 2; 
             //scene.rotation.y = Math.PI;
         }
     }, [scene]); 
 
-    useEffect(() => {  
-        if (!scene) {
-            console.log("scene is not fine");
-            // return a static image to save your ass instead 
-        }
-    }, [scene]);
 
     return (
     <Canvas style={{ height: '100%', width: '100%' }}>
         <CustomCamera />
+        <CameraAnimate />
         <Suspense fallback={null}>
-        <primitive object={scene} position={position} scale={scale} />;
+        <primitive ref={meshRef} object={scene} position={position} scale={scale} />;
         <Environment preset="sunset" />
         <OrbitControls />
 

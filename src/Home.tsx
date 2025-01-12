@@ -8,16 +8,23 @@ Home: stats page glass pane, background: 3d scene
 
 Handling render per user stats 
 
-
 */
 
-const homeStyle: React.CSSProperties = {
-    width: "70rem",
-    height: "100vh",
-}
+const pageBackground: React.CSSProperties = {
+   width: "100vw",
+   height: "100vh",
+   position: "fixed",
+   top: 0,
+   left: 0,
+   background: "radial-gradient(50% 50% at 50% 50%, #AEDAF1 0%, #57C6FE 100%)",
+   zIndex: 0, 
+};
 
 const navBar: React.CSSProperties = { 
-    backgroundColor: "red",
+    width: "100vw", 
+    position: "fixed",
+    top: "0", 
+    left: "0",
     display: "flex",
     flexDirection: "row", 
     justifyContent: "center",
@@ -28,10 +35,14 @@ const navBar: React.CSSProperties = {
 export default function Home () {
     return (
         <>
+        <div style={pageBackground} />
         <div style={navBar}>
             <Navbar />
         </div>
-        <Outlet />
+        <div>
+            <HomeModel url="public/forest3D.gltf" position={[0, 0, 0]} scale={1} />
+        </div>
+        <Outlet /> 
         </>
     );
 }
