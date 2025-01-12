@@ -55,6 +55,8 @@
             padding: 15px;
             margin-bottom: 20px;
             box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            display: flex;
+            justify-content: space-between;
             align-items: center;
         }
 
@@ -66,7 +68,6 @@
             border-radius: 5px;
             cursor: pointer;
             font-size: 16px;
-            align-items: center;
         }
 
 .nav-button:hover {
@@ -297,21 +298,10 @@
             'plant': 15
         };
 
-        const sound = new Audio('./src/assets/success.mp3')
-        sound.preload = 'auto';
-        sound.load();
-
-        function playSound() {
-            console.log('')
-            sound.play().catch(error => {
-                console.log('Audio playback failed: ', error)
-            });
-        }
-
         let selectedPose = '';
         
         const poseInstructions = {
-            'Warior Pose': [
+            'Warrior Pose': [
                 'Start in a standing position with your feet wide apart',
                 'Turn your right foot out 90 degrees and your left foot slightly in',
                 'Bend your right knee so it’s directly above your ankle',
@@ -413,13 +403,10 @@
             console.log('Advancing stage from:', growthStage); // Debug log
             if (growthStage === 'seed') {
                 growthStage = 'seedling';
-                playSound();
             } else if (growthStage === 'seedling') {
                 growthStage = 'plant';
-                playSound();
             } else if (growthStage === 'plant') {
                 growthStage = 'tree';
-                playSound();
             }
             accuracyTimer = 0;
             updateTreeImage();
@@ -500,33 +487,6 @@
 
 
         
-function updateGrowthProgress() {
-    const treeContainer = document.getElementById('tree-container');
-    let progressText = '';
-    
-    if (growthStage !== 'tree') {
-        if (accuracyTimer > 0) {
-            const remainingSeconds = Math.max(0, requiredSeconds[growthStage] - accuracyTimer);
-            progressText = `Hold pose for ${Math.ceil(remainingSeconds)} more seconds to reach next stage`;
-        } else {
-            progressText = 'Get to 90% accuracy to start progress';
-        }
-    } else {
-        progressText = 'Congratulations! You have mastered this pose! 🎉';
-    }
-    
-    // Update or create progress element
-    let progressElement = document.getElementById('growth-progress');
-    if (!progressElement) {
-        progressElement = document.createElement('div');
-        progressElement.id = 'growth-progress';
-        progressElement.style.marginTop = '10px';
-        progressElement.style.textAlign = 'center';
-        treeContainer.appendChild(progressElement);
-    }
-    progressElement.textContent = progressText;
-}
-
         async function loadModel() {
             const modelURL = URL + "model.json";
             const metadataURL = URL + "metadata.json";
@@ -557,8 +517,21 @@ function updateGrowthProgress() {
                 alert('Error loading model: ' + error.message);
             }
         }
-
-        async function startPractice() {
+        
+        async function initWithPose() {
+            selectedPose = document.getElementById('pose-selector').value;
+            if (!selectedPose) {
+                alert('Please select a pose first!');
+                return;
+            }
+            
+            // Add this line to load saved progress
+            loadProgress(selectedPose);
+            
+            // Reset timers
+            accuracyTimer = 0;
+            lastTimestamp = null;
+            
             try {
                 const size = 400;
                 const flip = true;
@@ -583,25 +556,7 @@ function updateGrowthProgress() {
                 console.error(error);
                 alert('Error starting webcam: ' + error.message);
             }
-         }
-        
-        async function initWithPose() {
-            selectedPose = document.getElementById('pose-selector').value;
-            if (!selectedPose) {
-                alert('Please select a pose first!');
-                return;
-            }
-            // Reset growth state
-            growthStage = 'seed';
-            accuracyTimer = 0;
-            lastTimestamp = null;  // Changed from 0 to null   
-    
-            await startPractice();
         }
-
-        document.getElementById('start-button').addEventListener('click', () => {
-            initWithPose();
-        });
 
         async function loop(timestamp) {
             webcam.update();
@@ -609,25 +564,25 @@ function updateGrowthProgress() {
             window.requestAnimationFrame(loop);
         }
 
-        async function predict() {
-        const { pose, posenetOutput } = await model.estimatePose(webcam.canvas);
-        const prediction = await model.predict(posenetOutput);
-        
-        const targetPrediction = prediction.find(p => p.className === selectedPose);
-        const accuracy = targetPrediction.probability * 100;
-        
-        const progressFill = document.getElementById('progress-fill');
-        progressFill.style.width = `${accuracy}%`;
-        progressFill.textContent = `${accuracy.toFixed(1)}%`;
-        
-        document.getElementById('accuracy-text').textContent = 
-            `Current Accuracy: ${accuracy.toFixed(1)}%`;
-        
-        // Update growth stage based on accuracy
-        updateGrowthStage(accuracy, performance.now()); 
-        
-        drawPose(pose);
-    }
+        async function predict(timestamp) {
+            const { pose, posenetOutput } = await model.estimatePose(webcam.canvas);
+            const prediction = await model.predict(posenetOutput);
+            
+            const targetPrediction = prediction.find(p => p.className === selectedPose);
+            const accuracy = targetPrediction.probability * 100;
+            
+            const progressFill = document.getElementById('progress-fill');
+            progressFill.style.width = `${accuracy}%`;
+            progressFill.textContent = `${accuracy.toFixed(1)}%`;
+            
+            document.getElementById('accuracy-text').textContent = 
+                `Current Accuracy: ${accuracy.toFixed(1)}%`;
+            
+            // Update growth stage based on accuracy with current timestamp
+            updateGrowthStage(accuracy, timestamp);
+            
+            drawPose(pose);
+        }
 
         function drawPose(pose) {
             if (webcam.canvas) {
