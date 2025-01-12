@@ -8,13 +8,16 @@
             margin: 0;
             padding: 20px;
             background-color: #f5f5f5;
+            min-width: 1000px; /* Enforce minimum width */
         }
         
         .main-container {
             display: grid;
-            grid-template-columns: 1fr 1fr;
+            grid-template-columns: 1fr 1fr; /* Force two columns */
             gap: 20px;
+            width: 100%;
             max-width: 1200px;
+            min-width: 1000px; /* Minimum width to prevent collapse */
             margin: 0 auto;
         }
         
@@ -23,6 +26,8 @@
             padding: 20px;
             border-radius: 10px;
             box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            width: 100%; /* Ensure panels take full width */
+            min-width: 450px; /* Minimum width for panels */
         }
         
         .header {
@@ -127,6 +132,13 @@
             text-align: center;
         }
         
+        .instructions {
+            margin-top: 20px;
+            padding: 15px;
+            background-color: #f8f8f8;
+            border-radius: 8px;
+        }
+
         .instruction-step {
             margin: 10px 0;
             padding: 8px;
@@ -134,12 +146,8 @@
             border-radius: 5px;
             box-shadow: 0 1px 3px rgba(0,0,0,0.1);
         }
-        
-        @media (max-width: 768px) {
-            .main-container {
-                grid-template-columns: 1fr;
-            }
-        }
+
+        /* Remove all media queries to prevent responsive collapse */
     </style>
 </head>
 <body>
@@ -165,10 +173,11 @@
             <div class="instructions" id="instructions">
                 <h3>Instructions</h3>
                 <div id="pose-specific-instructions">
-                <p>1. Select your target pose from the dropdown</p>
-                <p>2. Click "Start Practice" to begin</p>
-                <p>3. Position yourself in frame</p>
-                <p>4. Try to match the selected pose</p>
+                    <p>1. Select your target pose from the dropdown</p>
+                    <p>2. Click "Start Practice" to begin</p>
+                    <p>3. Position yourself in frame</p>
+                    <p>4. Try to match the selected pose</p>
+                </div>
             </div>
         </div>
         
@@ -191,7 +200,8 @@
         const URL = "https://teachablemachine.withgoogle.com/models/gbeyuZt6U/";
         let model, webcam, ctx, maxPredictions;
         let selectedPose = '';
-
+        
+        // Define instructions for each pose
         const poseInstructions = {
             'Class 1': [
                 'Stand with feet hip-width apart',
@@ -213,31 +223,27 @@
             ]
         };
 
-
         function updateInstructions(pose) {
-        const instructionsDiv = document.getElementById('pose-specific-instructions');
-        if (pose && poseInstructions[pose]) {
-            let instructionsHTML = '<div class="instruction-steps">';
-            poseInstructions[pose].forEach((instruction, index) => {
-                instructionsHTML += `
-                    <div class="instruction-step">
-                        ${index + 1}. ${instruction}
-                    </div>`;
-            });
-            instructionsHTML += '</div>';
-            instructionsDiv.innerHTML = instructionsHTML;
-        } else {
-            instructionsDiv.innerHTML = `
-                <p>1. Select your target pose from the dropdown</p>
-                <p>2. Click "Start Practice" to begin</p>
-                <p>3. Position yourself in frame</p>
-                <p>4. Try to match the selected pose</p>`;
+            const instructionsDiv = document.getElementById('pose-specific-instructions');
+            if (pose && poseInstructions[pose]) {
+                let instructionsHTML = '<div class="instruction-steps">';
+                poseInstructions[pose].forEach((instruction, index) => {
+                    instructionsHTML += `
+                        <div class="instruction-step">
+                            ${index + 1}. ${instruction}
+                        </div>`;
+                });
+                instructionsHTML += '</div>';
+                instructionsDiv.innerHTML = instructionsHTML;
+            } else {
+                instructionsDiv.innerHTML = `
+                    <p>1. Select your target pose from the dropdown</p>
+                    <p>2. Click "Start Practice" to begin</p>
+                    <p>3. Position yourself in frame</p>
+                    <p>4. Try to match the selected pose</p>`;
+            }
         }
-    }
-
-
         
-        // First load the model and populate the pose selector
         async function loadModel() {
             const modelURL = URL + "model.json";
             const metadataURL = URL + "metadata.json";
@@ -246,7 +252,6 @@
                 model = await tmPose.load(modelURL, metadataURL);
                 maxPredictions = model.getTotalClasses();
                 
-                // Populate pose selector
                 const selector = document.getElementById('pose-selector');
                 selector.innerHTML = '<option value="">Select a pose...</option>';
                 
@@ -257,8 +262,7 @@
                     option.text = className;
                     selector.appendChild(option);
                 }
-
-                // Add event listener to pose selector
+                
                 selector.addEventListener('change', function(e) {
                     const selectedPose = e.target.value;
                     updateInstructions(selectedPose);
@@ -290,16 +294,10 @@
                 canvas.height = size;
                 ctx = canvas.getContext("2d");
                 
-                // Show canvas and prediction container
                 document.getElementById('canvas-container').style.display = 'flex';
                 document.getElementById('prediction-container').style.display = 'block';
                 document.getElementById('setup-container').style.display = 'none';
                 
-                //update instructions
-                document.getElementById('instructions').innerHTML = '<h3>Instructions</h3><p>1. Match the pose shown on the screen</p><p>2. Try to hold the pose for a few seconds</p><p>3. Check your accuracy on the right</p>';
-                
-
-                // Set target pose name
                 document.getElementById('target-pose').textContent = `Target Pose: ${selectedPose}`;
                 
                 window.requestAnimationFrame(loop);
@@ -319,20 +317,16 @@
             const { pose, posenetOutput } = await model.estimatePose(webcam.canvas);
             const prediction = await model.predict(posenetOutput);
             
-            // Find the prediction for the selected pose
             const targetPrediction = prediction.find(p => p.className === selectedPose);
             const accuracy = targetPrediction.probability * 100;
             
-            // Update progress bar
             const progressFill = document.getElementById('progress-fill');
             progressFill.style.width = `${accuracy}%`;
             progressFill.textContent = `${accuracy.toFixed(1)}%`;
             
-            // Update accuracy text
             document.getElementById('accuracy-text').textContent = 
                 `Current Accuracy: ${accuracy.toFixed(1)}%`;
             
-            // Draw pose
             drawPose(pose);
         }
 
@@ -348,7 +342,6 @@
             }
         }
         
-        // Load model when page loads
         loadModel();
     </script>
 </body>
