@@ -87,16 +87,20 @@
     </div>
 
     <script>
+        // Define all available poses
+        const allPoses = ['Warior Pose', 'Chair Pose', 'Tree Pose', 'Triangle'];
+
         function displayProgress() {
             const progressGrid = document.getElementById('progress-grid');
-            const allProgress = JSON.parse(localStorage.getItem('yogaProgress') || '{}');
+            const savedProgress = JSON.parse(localStorage.getItem('yogaProgress') || '{}');
             
-            if (Object.keys(allProgress).length === 0) {
-                progressGrid.innerHTML = '<div style="text-align: center; grid-column: 1/-1;"><h2>No progress yet. Start practicing to see your progress!</h2></div>';
-                return;
-            }
+            // Create a card for each pose
+            allPoses.forEach(pose => {
+                const progress = savedProgress[pose] || {
+                    growthStage: 'seed',
+                    lastUpdated: new Date().toISOString()
+                };
 
-            Object.entries(allProgress).forEach(([pose, progress]) => {
                 const card = document.createElement('div');
                 card.className = 'pose-card';
                 card.innerHTML = `
