@@ -10,25 +10,35 @@
             background-color: #f5f5f5;
             min-width: 1000px;
         }
-        
-        .main-container {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 20px;
-            width: 100%;
-            max-width: 1200px;
-            min-width: 1000px;
-            margin: 0 auto;
-        }
-        
-        .left-panel, .right-panel {
-            background-color: white;
-            padding: 20px;
-            border-radius: 10px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-            width: 100%;
-            min-width: 450px;
-        }
+    
+.main-container {
+    display: grid;
+    grid-template-columns: 60fr 40fr;  /* Changed from 1fr 1fr to 60fr 40fr */
+    gap: 20px;
+    width: 100%;
+    max-width: 1200px;
+    min-width: 1000px;
+    margin: 0 auto;
+}
+
+/* Update min-widths for panels to maintain proportions */
+.left-panel {
+    background-color: white;
+    padding: 20px;
+    border-radius: 10px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    width: 100%;
+    min-width: 580px; /* 60% of 1000px (min-width) minus gap */
+}
+
+.right-panel {
+    background-color: white;
+    padding: 20px;
+    border-radius: 10px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    width: 100%;
+    min-width: 380px; /* 40% of 1000px (min-width) minus gap */
+}
         
         .header {
             text-align: center;
@@ -79,22 +89,33 @@
             position: relative;
             width: 100%;
             display: flex;
+            flex-direction: column;
+            align-items: center;
             justify-content: center;
+            margin: 0 auto;
             display: none;
+            padding: 20px 0;
         }
-        
+
         #canvas {
             border: 2px solid #ccc;
             border-radius: 10px;
             max-width: 100%;
+            display: block;
+            margin: 0 auto;
         }
-        
+
         .prediction-container {
             margin-top: 20px;
             padding: 20px;
             background-color: #f8f8f8;
             border-radius: 8px;
             display: none;
+            text-align: center;
+            width: 100%;
+            max-width: 75%;
+            margin-left: auto;
+            margin-right: auto;
         }
         
         .target-pose {
@@ -146,6 +167,43 @@
             border-radius: 5px;
             box-shadow: 0 1px 3px rgba(0,0,0,0.1);
         }
+        
+        .tree-container {
+            margin-top: 20px;
+            padding: 15px;
+            background-color: #f8f8f8;
+            border-radius: 8px;
+            display: none;
+            text-align: center;
+        }
+        
+        .tree-container h3 {
+            margin-top: 0;
+            margin-bottom: 15px;
+            text-align: center;
+            color: #2d5a27;
+        }
+        
+        .tree-image {
+            aspect-ratio: 1;
+            width: 100%;
+            max-width: 400px;
+            background-color: #e8f5e9;
+            border-radius: 5px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 10px;
+        }
+
+        
+        .tree-image img {
+            max-width: 400px;
+            max-height: 400px;
+            object-fit: contain;
+            margin: 0 auto;
+        }
     </style>
 </head>
 <body>
@@ -187,6 +245,12 @@
                     <p>2. Click "Start Practice" to begin</p>
                     <p>3. Position yourself in frame</p>
                     <p>4. Try to match the selected pose</p>
+                </div>
+            </div>
+            <div class="tree-container" id="tree-container">
+                <h3>Your Tree</h3>
+                <div class="tree-image">
+                    <img src="tree.jpg" alt="Tree Visualization" style="max-width: 100%; height: auto;" />
                 </div>
             </div>
         </div>
@@ -294,6 +358,7 @@
                 document.getElementById('canvas-container').style.display = 'flex';
                 document.getElementById('prediction-container').style.display = 'block';
                 document.getElementById('setup-container').style.display = 'none';
+                document.getElementById('tree-container').style.display = 'block';
                 
                 document.getElementById('target-pose').textContent = `Target Pose: ${selectedPose}`;
                 
