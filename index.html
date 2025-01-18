@@ -300,7 +300,7 @@
             <div class="tree-container" id="tree-container">
                 <h3>Your Tree</h3>
                 <div class="tree-image">
-                    <img src="seed.jpeg" alt="Growth Progress" style="max-width: 100%; height: auto;" />
+                    <img src="/seed.jpeg" alt="Growth Progress" style="max-width: 100%; height: auto;" />
                 </div>
             </div>
         </div>
@@ -474,7 +474,7 @@
 
         function updateTreeImage() {
             const treeImg = document.querySelector('.tree-image img');
-            treeImg.src = `${growthStage}.jpeg`;
+            treeImg.src = `/${growthStage}.jpeg`;
         }
 
         function updateGrowthProgress() {
